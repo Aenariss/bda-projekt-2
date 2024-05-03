@@ -4,28 +4,30 @@ pragma solidity 0.8.25;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
+import "./MintManager.sol";
+
 
 // https://dev.to/willkre/create-deploy-an-erc-20-token-in-15-minutes-truffle-openzeppelin-goerli-33lb
 // https://www.openzeppelin.com/contracts
-contract ImprovedERC is ERC20, AccessControl  {
+contract ImprovedERC is ERC20, AccessControl, MintManager  {
 
     uint256 private _totalSupplyCap;
-    uint256 private _TMAX; // limit how much a minter can mint per day
+    uint256 private consensusThreshold;
     bytes32 private constant _mintingAdmin = keccak256("mintingAdmin");
 
     mapping(address => uint256) private _mintedToday; // how much a minter has already minted today
     mapping(address => uint256) private _mintTime;
     
-    constructor(string memory name, string memory symbol, uint256 totalSupply, uint256 TMAX_val) ERC20(name, symbol) {
+    constructor(string memory name, string memory symbol, uint256 totalSupply, uint256 TMAX_val) ERC20(name, symbol) MintManager(TMAX_val, decimals()) {
 
         require(totalSupply > 0, "Initial supply has to be greater than 0");
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(_mintingAdmin, msg.sender);
+        consensusThreshold = 1;
 
-        _TMAX = TMAX_val * 10 ** decimals();
         _totalSupplyCap = totalSupply * 10 ** decimals(); // hard cap the number of tokens
-        mint(msg.sender, _totalSupplyCap / 2); // give half the total amount to the account
+        mint(msg.sender, TMAX() / 2); // give half the total amount to the account
     }
 
     /* Modifier to ensure the total token cap is not exceeded */
@@ -45,7 +47,7 @@ contract ImprovedERC is ERC20, AccessControl  {
     modifier doesntExceedTmax(address account, uint256 value) {
 
         // The sender
-        if (_mintedToday[msg.sender] + value > _TMAX) {
+        if (_mintedToday[msg.sender] + value > TMAX()) {
             revert("Exceeded daily minting limit");
         }
         _mintedToday[msg.sender] += value;
@@ -62,9 +64,18 @@ contract ImprovedERC is ERC20, AccessControl  {
         return _mintedToday[user];
     }
 
-    /* Get how much has minted minted today */
-    function TMAX() public view returns (uint256) {
-        return _TMAX;
+    /* Set the new TMAX after majority consensus */
+    function changeTMAX(uint256 newTMAX) public 
+        onlyRole(_mintingAdmin)
+    {
+        changeTMAX(newTMAX, consensusThreshold);
+        
+    }
+
+    function voteForTMAX(uint256 proposalId) public 
+        onlyRole(_mintingAdmin)
+    {
+        voteForTMAX(proposalId, consensusThreshold);
     }
 
     /**

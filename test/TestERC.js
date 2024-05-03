@@ -150,6 +150,42 @@ contract(' TEST SUITE 1 [ Basic functionality of token ]', function(accounts) {
 
         }
     });
+
+    // Changing TMAX 
+    it("Change TMAX, only minters can -- only 1 admin", async() => {
+        var contract = await ImprovedERC.deployed();
+
+        var minter = sender;
+        var not_minter = accounts[4];
+
+
+        var old_tmax = await contract.TMAX();
+
+        var eth_limit = convertBNToEth(old_tmax)
+        var receipt = await contract.changeTMAX(BigInt((parseInt(eth_limit)+1000) * 10**decimals), {from: minter})
+        var new_tmax = await contract.TMAX();
+
+        // There has to be proposal and change events
+        assert(isEventInLogs("TMAXProposalEvent", receipt.receipt.logs));
+        assert(isEventInLogs("TMAXChangeEvent", receipt.receipt.logs));
+        
+        console.log("Old TMAX:", convertBNToEth(old_tmax), "New TMAX:", convertBNToEth(new_tmax));
+
+        /* Try to change tmax when not minter */
+        try {
+            var receipt = await contract.changeTMAX(BigInt((eth_limit+2000) * 10**decimals), {from: not_minter});
+        }
+        catch (error) {
+
+            console.log("Non-minter tried to change TMAX! Success");
+            const revertFound = error.message.search('revert') >= 0;
+            // Reverted
+            assert(revertFound, `Expected "revert", got ${error} instead`);
+
+        }
+    });
+
+    // Add 2 new users as minters and check TMAX needs them to consent
     
     
 });
@@ -158,10 +194,12 @@ contract(' TEST SUITE 1 [ Basic functionality of token ]', function(accounts) {
 /// AUX Functions
 
 function isEventInLogs(event, logs) {
+
     for (let i = 0; i < logs.length; i++) {
         if (logs[i].event !== undefined && logs[i].event == event) {
             return true;
         }
     }
+
     return false;
 };

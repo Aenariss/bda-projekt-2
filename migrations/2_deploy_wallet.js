@@ -1,5 +1,6 @@
 var W3 = require('web3');
 var ImprovedERC = artifacts.require("ImprovedERC");
+var MintManager = artifacts.require("MintManager");
 var conf = require("../config/erc_config.js");
 
 module.exports = function(deployer, network, accounts) {
@@ -14,10 +15,17 @@ module.exports = function(deployer, network, accounts) {
     } else { // development & test networks
     }
 
-    console.log('Deploying ImprovedERC to network', network);
+    console.log('Deploying MintManager to network', network);
     
-    result = deployer.deploy(ImprovedERC, "ImprovedERC", "IERC", conf.INITIAL_SUPPLY, conf.TMAX).then(() => {
-        console.log('Deployed ImprovedERC with address', ImprovedERC.address);
-        console.log("\t \\/== Default gas limit:", ImprovedERC.class_defaults.gas);
+    result = deployer.deploy(MintManager, conf.TMAX, conf.decimals ).then(() => {
+        console.log('Deployed MintManager with address', MintManager.address);
+        console.log("\t \\/== Default gas limit:", MintManager.class_defaults.gas);
+
+        console.log('Deploying ImprovedERC to network', network);
+    
+        return deployer.deploy(ImprovedERC, "ImprovedERC", "IERC", conf.INITIAL_SUPPLY, conf.TMAX).then(() => {
+            console.log('Deployed ImprovedERC with address', ImprovedERC.address);
+            console.log("\t \\/== Default gas limit:", ImprovedERC.class_defaults.gas);
+        });
     });
 };

@@ -30,20 +30,13 @@ contract(' TEST SUITE 1 [ Basic functionality of token ]', function(accounts) {
         assert( W3.utils.fromWei(totalSupply.toString()) == conf.INITIAL_SUPPLY)
         console.log("Total Supply is:", W3.utils.fromWei(totalSupply.toString()))
 
-        // Mint more than the cap (2x+1 as much)
-        try {
-            const mintAmount = BigInt(((conf.INITIAL_SUPPLY / 2) + 1) * 10**decimals);
-            var receipt = await contract.mint(sender, mintAmount, {from: sender});
+        // Mint more than the cap (2x+1 as much) -- this should create mintOVerrideProposal
+        const mintAmount = BigInt(((conf.TMAX / 2) + 1) * 10**decimals);
+        var receipt = await contract.mint(sender, mintAmount, {from: sender});
 
-            throw new Error("This should never happen");
-
-        }
-        catch (error) {
-            console.log("Tried to go over the limit! Correctly caught!");
-            const revertFound = error.message.search('revert') >= 0;
-            // Reverted
-            assert(revertFound, `Expected "revert", got ${error} instead`);
-        }
+        // Since there's only 1 admin for now, lets check the proposal was made and approved
+        assert(isEventInLogs("mintLimitOverrideProposal", receipt.receipt.logs));
+        assert(isEventInLogs("mintLimitOverride", receipt.receipt.logs));
 
     }); 
 
@@ -162,10 +155,10 @@ contract(' TEST SUITE 1 [ Basic functionality of token ]', function(accounts) {
         var old_tmax = await contract.TMAX();
 
         var eth_limit = convertBNToEth(old_tmax)
-        var receipt = await contract.changeTMAX(BigInt((parseInt(eth_limit)+1000) * 10**decimals), {from: minter})
+        var receipt = await contract.newTMAXProposal(BigInt((parseInt(eth_limit)+1000) * 10**decimals), {from: minter})
         var new_tmax = await contract.TMAX();
 
-        // There has to be proposal and change events
+        // There has to be proposal and change events ucz only 1 admin
         assert(isEventInLogs("TMAXProposalEvent", receipt.receipt.logs));
         assert(isEventInLogs("TMAXChangeEvent", receipt.receipt.logs));
         
@@ -173,7 +166,7 @@ contract(' TEST SUITE 1 [ Basic functionality of token ]', function(accounts) {
 
         /* Try to change tmax when not minter */
         try {
-            var receipt = await contract.changeTMAX(BigInt((eth_limit+2000) * 10**decimals), {from: not_minter});
+            var receipt = await contract.newTMAXProposal(BigInt((eth_limit+2000) * 10**decimals), {from: not_minter});
         }
         catch (error) {
 
@@ -185,8 +178,71 @@ contract(' TEST SUITE 1 [ Basic functionality of token ]', function(accounts) {
         }
     });
 
-    // Add 2 new users as minters and check TMAX needs them to consent
-    
+    // Add 2 new users as minters and test you need them to agree
+    it("Add new Minter admins", async() => {
+        var contract = await ImprovedERC.deployed();
+
+        var minter_original = sender;
+        var not_minter_1 = accounts[4];
+        var not_minter_2 = accounts[5];
+
+        var receipt = await contract.newMinterProposal(not_minter_1, true, {from: minter_original});
+
+        assert(isEventInLogs("minterProposalEvent", receipt.receipt.logs));
+        assert(isEventInLogs("minterAcceptanceEvent", receipt.receipt.logs));
+
+        var receipt = await contract.newMinterProposal(not_minter_2, true, {from: minter_original});
+        assert(isEventInLogs("minterProposalEvent", receipt.receipt.logs));
+        assert(!isEventInLogs("minterAcceptanceEvent", receipt.receipt.logs)); // cant be accepted yet
+
+        // get existing proposals
+        var pendingMinters = await contract.getMinterProposals();
+
+        // It will be important to later check if he voted already
+        var receipt = await contract.voteForMinter(pendingMinters[0], {from: not_minter_1});
+
+        assert(isEventInLogs("minterAcceptanceEvent", receipt.receipt.logs));
+    });
+
+    // Check transfer limit
+    it("Transfer limit changes", async() => {
+        var contract = await ImprovedERC.deployed();
+
+        var transfer_admin = sender;
+        var not_transfer_admin_1 = accounts[4];
+        var not_transfer_admin_2 = accounts[5];
+
+        // Try to send more than the transferlimit
+
+        try {
+            var receipt = await contract.transfer(not_transfer_admin_1, W3.utils.toBN(500 * 10**decimals), {from: transfer_admin});
+        }
+        catch (error) {
+            console.log("Tried to send over TRANSFERLIMIT! Success");
+            const revertFound = error.message.search('revert') >= 0;
+            // Reverted
+            assert(revertFound, `Expected "revert", got ${error} instead`);
+        }
+
+
+        // Try to make another user transfer admin
+        var receipt = await contract.newRestrAdmin(not_transfer_admin_1, true, {from: transfer_admin});
+
+        assert(isEventInLogs("restrAdminProposalEvent", receipt.receipt.logs));
+        assert(isEventInLogs("restrAdminAdd", receipt.receipt.logs));
+
+        var receipt = await contract.newRestrAdmin(not_transfer_admin_2, true, {from: transfer_admin});
+        assert(isEventInLogs("restrAdminProposalEvent", receipt.receipt.logs));
+        assert(!isEventInLogs("restrAdminAdd", receipt.receipt.logs)); // cant be accepted yet
+
+        // get existing proposals
+        var pendingMinters = await contract.getRestrProposals();
+
+        // It will be important to later check if he voted already
+        var receipt = await contract.voteForRestrAdmin(pendingMinters[0], {from: not_transfer_admin_1});
+
+        assert(isEventInLogs("restrAdminAdd", receipt.receipt.logs));
+    });
     
 });
 
@@ -203,3 +259,4 @@ function isEventInLogs(event, logs) {
 
     return false;
 };
+

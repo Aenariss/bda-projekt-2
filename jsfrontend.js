@@ -10,19 +10,198 @@ const configFile = "./config/client_app_config.json";
 function editForNSeconds(time, element_id, text, color="black") {
 
     const e = document.getElementById(element_id);
-    let formerText = e.innerHTML;
-    let formerColor = e.style.color;
     e.style.color = color;
     e.innerHTML = text;
 
     function changeBack() {
-        e.innerHTML = formerText;
-        e.style.color = formerColor;
+        e.innerHTML = "";
+        e.style.color = "black";
     }
 
     setTimeout(changeBack, time*1000); 
 }
 
+
+async function voteProposalTMAX(proposalId, flag) {
+    contract = await getContract();
+
+    let sender = window.ethereum.selectedAddress;
+
+    try {
+        if (flag)
+            await contract.methods.voteForTMAX(proposalId).send({ from: sender, gas: '6700000' });
+        else
+            await contract.methods.voteMintIncrease(proposalId).send({ from: sender, gas: '6700000' });
+
+        editForNSeconds(3, "TmaxProposalResult", "Successfully voted!", "green")
+    }
+    catch (error) {
+        console.log(error)
+        editForNSeconds(3, "TmaxProposalResult", "Couldn't vote! Voting again? Not an admin?!", "red")
+    }
+    lastTmaxBlock = 0;
+    document.getElementById("TmaxProposalsList").innerHTML = "";  
+    showTmaxProposals();
+    await writeMintLimit();
+}
+
+async function voteProposalMinter(proposalId) {
+    contract = await getContract();
+
+    let sender = window.ethereum.selectedAddress;
+
+    try {
+        await contract.methods.voteForMinter(proposalId).send({ from: sender, gas: '6700000' });
+
+        editForNSeconds(3, "MintProposalResult", "Successfully voted!", "green")
+    }
+    catch (error) {
+        console.log(error)
+        editForNSeconds(3, "MintProposalResult", "Couldn't vote! Voting again? Not an admin?!", "red")
+    }
+    lastNewMinterBlock = 0;
+    document.getElementById("newRestrAdminProposals").innerHTML = "";  
+    document.getElementById("newMinterProposals").innerHTML = "";  
+    showMinterProposals();
+    await writeAdmins();
+}
+
+async function voteProposalRestrAdmin(proposalId) {
+    contract = await getContract();
+
+    let sender = window.ethereum.selectedAddress;
+
+    try {
+        await contract.methods.voteForRestrAdmin(proposalId).send({ from: sender, gas: '6700000' });
+
+        editForNSeconds(3, "RestrAdminProposalResult", "Successfully voted!", "green")
+    }
+    catch (error) {
+        console.log(error)
+        editForNSeconds(3, "RestrAdminProposalResult", "Couldn't vote! Voting again? Not an admin?!", "red")
+    }
+    lastRestAdminBlock = 0;
+    document.getElementById("newRestrAdminProposals").innerHTML = "";  
+    document.getElementById("newMinterProposals").innerHTML = "";  
+    showRestrAdminProposals();
+    await writeAdmins();
+}
+
+async function voteProposalTransferLimit(proposalId) {
+    contract = await getContract();
+
+    let sender = window.ethereum.selectedAddress;
+
+    try {
+        await contract.methods.voteDailyLimit(proposalId).send({ from: sender, gas: '6700000' });
+
+        editForNSeconds(3, "changeTransferLimitResult", "Successfully voted!", "green")
+    }
+    catch (error) {
+        console.log(error)
+        editForNSeconds(3, "changeTransferLimitResult", "Couldn't vote! Voting again? Not an admin?!", "red")
+    }
+    lastTransferLimitChangeBlock = 0;
+    document.getElementById("changeTransferLimitProposals").innerHTML = "";  
+    showTransferLimitProposals();
+    showTransferLimit();
+}
+
+async function handleTransferLimitProposal(event) {
+    event.preventDefault(); // doesnt work without this
+    contract = await getContract();
+    let sender = window.ethereum.selectedAddress;
+
+    let user = document.getElementById("TransferLimitAddress").value;
+    let limit = document.getElementById("TransferLimitAmount").value;
+    
+    try {
+        await contract.methods.changeDailyLimit(user, limit).send({ from: sender, gas: '6700000'  });
+
+        editForNSeconds(3, "changeTransferLimitResult", "Successfully proposed! Wait for a few seconds before it appears!", "green")
+    }
+    catch (error) {
+        console.log(error)
+        editForNSeconds(3, "changeTransferLimitResult", "Couldn't propose! Are you an admin?! Maybe the user already is/isn't an admin", "red")
+    } 
+    lastTransferLimitChangeBlock = 0;
+    document.getElementById("changeTransferLimitProposals").innerHTML = ""; 
+    showTransferLimitProposals();
+    showTransferLimit();
+}
+
+async function handleRestrAdminProposal(event) {
+    event.preventDefault(); // doesnt work without this
+    contract = await getContract();
+    let sender = window.ethereum.selectedAddress;
+
+    let newMinter = document.getElementById("RestrAdminAddress").value;
+    let flag = document.getElementById("RestrAdminFlag").value == '0' ? false : true;
+    
+    try {
+        await contract.methods.newRestrAdmin(newMinter, flag).send({ from: sender, gas: '6700000'  });
+
+        editForNSeconds(3, "RestrAdminProposalResult", "Successfully proposed! Wait for a few seconds before it appears!", "green")
+    }
+    catch (error) {
+        console.log(error)
+        editForNSeconds(3, "RestrAdminProposalResult", "Couldn't propose! Are you an admin?! Maybe the user already is/isn't an admin", "red")
+    } 
+    lastRestAdminBlock = 0;
+    document.getElementById("newRestrAdminProposals").innerHTML = "";  
+    document.getElementById("newMinterProposals").innerHTML = "";  
+    showRestrAdminProposals();
+    await writeAdmins();
+}
+
+
+async function handleTMAXProposal(event) {
+    event.preventDefault(); // doesnt work without this
+    contract = await getContract();
+    let sender = window.ethereum.selectedAddress;
+
+    let value = document.getElementById("TmaxProposalValue").value;
+    
+    try {
+        await contract.methods.newTMAXProposal(value).send({ from: sender, gas: '6700000'  });
+
+        editForNSeconds(3, "TmaxProposalResult", "Successfully proposed! Wait for a few seconds before it appears!", "green")
+    }
+    catch (error) {
+        console.log(error)
+        editForNSeconds(3, "TmaxProposalResult", "Couldn't propose! Are you an admin?! Check console!", "red")
+    }
+    // Remove all shjown proposals and wait until they show again
+    lastTmaxBlock = 0;
+    document.getElementById("TmaxProposalsList").innerHTML = "";  
+    showTmaxProposals();
+    await writeMintLimit();
+}
+
+async function handleMinterProposal(event) {
+    event.preventDefault(); // doesnt work without this
+    contract = await getContract();
+    let sender = window.ethereum.selectedAddress;
+
+    let newMinter = document.getElementById("MinterAddress").value;
+    let flag = document.getElementById("newMinterFlag").value == '0' ? false : true;
+    
+    try {
+        await contract.methods.newMinterProposal(newMinter, flag).send({ from: sender, gas: '6700000'  });
+
+        editForNSeconds(3, "MintProposalResult", "Successfully proposed! Wait for a few seconds before it appears!", "green")
+    }
+    catch (error) {
+        console.log(error)
+        editForNSeconds(3, "MintProposalResult", "Couldn't propose! Are you an admin?! Maybe the user already is/isn't an admin", "red")
+    } 
+    // Remove all shjown proposals and wait until they show again
+    lastNewMinterBlock = 0;
+    document.getElementById("newRestrAdminProposals").innerHTML = "";  
+    document.getElementById("newMinterProposals").innerHTML = "";  
+    showMinterProposals();
+    await writeAdmins();
+}
 
 async function handleSend(event) {
 
@@ -184,7 +363,7 @@ async function writeMintLimit() {
         let minted_today = await contract.methods.mintedToday(sender).call()
 
         let can_mint_today = BigNumber(mint_limit).minus(minted_today)
-        const p = document.getElementById("mintLimit").innerHTML = "You can mint <b>" + formatBigNumber(can_mint_today) + "</b> more tokens today! You already minted <b>" + formatBigNumber(minted_today) + "</b> today!";
+        const p = document.getElementById("mintLimit").innerHTML = "You can mint <b>" + formatBigNumber(can_mint_today) + "</b> more tokens until you reach TMAX today! You already minted <b>" + formatBigNumber(minted_today) + "</b> today!";
     }
 }
 
@@ -237,10 +416,45 @@ async function showMinterProposalForm() {
     }
 }
 
+async function showRestrAdminProposalForm() {
+    if (roles[1] == true) {
+        const e = document.getElementById("newRestrAdminForm");
+        e.innerHTML = "\
+                        <h2>Add/Remove restrAdmin:</h2>\
+                        <form onSubmit='handleRestrAdminProposal(event)'>\
+                            <label for='RestrAdminAddress'>User to change:</label><br>\
+                            <input type='text' id='RestrAdminAddress' name='RestrAdminAddress'><br>\
+                            <label for='RestrAdminFlag'>Change details:</label><br>\
+                            <select name='RestrAdminFlag' id='RestrAdminFlag'>\
+                            <option value='1'>Add as a restr admin</option>\
+                            <option value='0'>Remove from restr admins</option>\
+                            </select>\
+                            <input type='submit' value='Propose'>\
+                        </form>\
+                        ";                      
+    }
+}
+
+async function showTransferLimitProposalForm() {
+    if (roles[1] == true) {
+        const e = document.getElementById("changeTransferLimitForm");
+        e.innerHTML = "\
+                        <h2>Change TRANSFERLIMIT of user:</h2>\
+                        <form onSubmit='handleTransferLimitProposal(event)'>\
+                            <label for='TransferLimitAddress'>User to change:</label><br>\
+                            <input type='text' id='TransferLimitAddress' name='TransferLimitAddress'><br>\
+                            <label for='TransferLimitAmount'>New Limit:</label><br>\
+                            <input type='text' id='TransferLimitAmount' name='TransferLimitAmount'><br>\
+                            <input type='submit' value='Propose'>\
+                        </form>\
+                        ";                      
+    }
+}
+
 function showTmaxProposals() {
     if (roles[0] == true) {
         const e = document.getElementById("TmaxProposalsList");
-        e.innerHTML = "<h2>TMAX pending proposals (newest at the bottom):</h2>"
+        e.innerHTML = "<h2>TMAX pending proposals -- newest at the bottom (TMAX first, one-time overrides after):</h2>"
     }
 }
 
@@ -251,24 +465,40 @@ function showMinterProposals() {
     }
 }
 
+function showRestrAdminProposals() {
+    if (roles[0] == true) {
+        const e = document.getElementById("newRestrAdminProposals");
+        e.innerHTML = "<h2>Proposals for new restrAdmins (newest at the bottom):</h2>"
+    }
+}
+
+function showTransferLimitProposals() {
+    if (roles[1] == true) {
+        const e = document.getElementById("changeTransferLimitProposals");
+        e.innerHTML = "<h2>Proposals for TRANSFERLIMIT changes for individual users (newest at the bottom):</h2>"
+    }
+}
+
 async function showTmaxProposal(proposal, flag) {
-    newTmaxVal = proposal.returnValues.newTMAX;
+    let newTmaxVal;
     proposedBy = proposal.returnValues.proposedBy;
 
     let id = '';
 
-    try {
+    if (flag) {
         id = proposal.returnValues.TMAXProposalCounter;
+        newTmaxVal = proposal.returnValues.newTMAX;
     }
-    catch (error) {
+    else {
         id = proposal.returnValues.mintProposalCounter;
+        newTmaxVal = proposal.returnValues.toMint;
     }
 
     let sender = window.ethereum.selectedAddress;
 
     let link = ''
     if (proposedBy.toLowerCase() != sender.toLowerCase()) {
-        link = `<a href="#" onclick='voteProposalTMAX("${id}")'>Vote for this</a>`;
+        link = `<a href="#" onclick='voteProposalTMAX("${id}, ${flag}")'>Vote for this</a>`;
     }
 
     tmp_name = '';
@@ -281,10 +511,17 @@ async function showTmaxProposal(proposal, flag) {
 
     htmlString = "<ul> " + tmp_name + link +
                     "<li>Proposed By: " + proposedBy +
-                    "</li>\
-                    <li>Proposed new TMAX: " + newTmaxVal +
-                    "</li>\
-                </ul>"
+                    "</li>"
+
+    if (flag) {
+        htmlString += "<li>Proposed new TMAX: " + newTmaxVal + "</li>";
+    }
+    else {
+        htmlString += "<li>Proposed amount: " + newTmaxVal + "</li>";
+        htmlString += "<li>MintReceiver: " + proposal.returnValues.mintReceive + "</li>";
+    }
+
+    htmlString += "</ul>"
     const e = document.getElementById("TmaxProposalsList").innerHTML += htmlString;
 
 }
@@ -310,6 +547,54 @@ async function showMinterProposal(proposal) {
                     "</li>\
                 </ul>"
     const e = document.getElementById("newMinterProposals").innerHTML += htmlString;
+
+}
+
+async function showRestrAdminProposal(proposal) {
+    userToChange = proposal.returnValues.userToChange;
+    proposedBy = proposal.returnValues.proposedBy;
+    proposalCounter = proposal.returnValues.proposalCounter;
+    let sender = window.ethereum.selectedAddress;
+
+    let flag = proposal.returnValues.flag == false ? "Remove the member " : "Accept the member "
+    flag += "event"
+
+    let link = ''
+    if (proposedBy.toLowerCase() != sender.toLowerCase()) {
+        link = `<a href="#" onclick='voteProposalRestrAdmin("${proposalCounter}")'>Vote for this</a>`;
+    }
+
+    htmlString = "<ul> " + flag + link +
+                    "<li>Proposed By: " + proposedBy +
+                    "</li>\
+                    <li>User to change: " + userToChange +
+                    "</li>\
+                </ul>"
+    const e = document.getElementById("newRestrAdminProposals").innerHTML += htmlString;
+
+}
+
+async function showTransferLimitProposal(proposal) {
+    userToChange = proposal.returnValues.userToChange;
+    proposedBy = proposal.returnValues.proposedBy;
+    proposalCounter = proposal.returnValues.proposalCounter;
+    newLimit = proposal.returnValues.newLimit;
+    let sender = window.ethereum.selectedAddress;
+
+    let link = ''
+    if (proposedBy.toLowerCase() != sender.toLowerCase()) {
+        link = `<a href="#" onclick='voteProposalTransferLimit("${proposalCounter}")'>Vote for this</a>`;
+    }
+
+    htmlString = "<ul> " + "Change TRANSFERLIMIT of user proposal " + link +
+                    "<li>Proposed By: " + proposedBy +
+                    "</li>\
+                    <li>User to change: " + userToChange +
+                    "</li>\
+                    <li>New Limit: " + newLimit +
+                    "</li>\
+                </ul>"
+    const e = document.getElementById("changeTransferLimitProposals").innerHTML += htmlString;
 
 }
 
@@ -348,6 +633,10 @@ let main = async () => {
         showTmaxProposals();
         showMinterProposals();
         showMinterProposalForm();
+        showRestrAdminProposalForm();
+        showRestrAdminProposals();
+        showTransferLimitProposalForm();
+        showTransferLimitProposals();
 
     }
     else {
@@ -412,9 +701,57 @@ async function listenForMintAdminProposals() {
     }
 }
 
+// Process past events and check for new ones
+var lastRestAdminBlock = 0;
+async function listenForRestrAdminProposals() {
+    if (roles.length == 2) {
+        if (roles[1] == true) {
+            const newestBlock = await web3.eth.getBlockNumber();
+            
+            if (newestBlock > lastRestAdminBlock) {
+                let events = await contract.getPastEvents('restrAdminProposalEvent', {
+                    fromBlock: lastRestAdminBlock,
+                    toBlock: newestBlock
+                });
+
+                // Process events
+                events.forEach(event => {
+                    showRestrAdminProposal(event);
+                });
+            }
+            lastRestAdminBlock = newestBlock;
+        }
+    }
+}
+
+// Process past events and check for new ones
+var lastTransferLimitChangeBlock = 0;
+async function listenForTransferLimitProposals() {
+    if (roles.length == 2) {
+        if (roles[1] == true) {
+            const newestBlock = await web3.eth.getBlockNumber();
+            
+            if (newestBlock > lastTransferLimitChangeBlock) {
+                let events = await contract.getPastEvents('limitChangeProposal', {
+                    fromBlock: lastTransferLimitChangeBlock,
+                    toBlock: newestBlock
+                });
+
+                // Process events
+                events.forEach(event => {
+                    showTransferLimitProposal(event);
+                });
+            }
+            lastTransferLimitChangeBlock = newestBlock;
+        }
+    }
+}
+
 main();
 
 setInterval(listenForTMAXProposals, 3000);
 setInterval(listenForMintAdminProposals, 3000);
+setInterval(listenForRestrAdminProposals, 3000);
+setInterval(listenForTransferLimitProposals, 3000);
 
-// restrAdmini stejne jako mintAdmini
+// zmena TRANSFERLIMITU pro jednoho uzivatele - podobne jako tmax, ale bude tam form pro koho + hodnota

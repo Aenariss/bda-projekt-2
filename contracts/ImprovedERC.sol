@@ -267,6 +267,7 @@ contract ImprovedERC is ERC20, AccessControl, MintManager, TransferManager  {
         onlyRole(_restrAdmin)
     {
         restrAdminProposal storage proposal = voteNewRestrAdmin(proposalId, consensusThresholdRestr);
+        
         // vote is over
         if (proposal.approvals >= consensusThresholdRestr) {
             if (proposal.flag) {
@@ -294,6 +295,20 @@ contract ImprovedERC is ERC20, AccessControl, MintManager, TransferManager  {
     function newRestrAdmin(address user, bool flag) public
         onlyRole(_restrAdmin)
     {
+
+        // adding
+        if (flag) {
+            if (hasRole(_restrAdmin, user)) {
+                revert("The user is already a mintAdmin!");
+            }
+        }
+        //removing
+        else {
+            if (!hasRole(_restrAdmin, user)) {
+                revert("The user isn't a mintAdmin!");
+            }
+        }
+
         bool pass = setRestrAdmin(user, consensusThresholdRestr, flag);
 
         if (pass) {

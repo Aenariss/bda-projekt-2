@@ -15,7 +15,7 @@ contract MintManager {
     event TMAXProposalEvent(uint256 TMAXProposalCounter, address proposedBy, uint256 newTMAX);
     event TMAXChangeEvent(address proposedBy, uint256 newTMAX);
 
-    event mintLimitOverrideProposal(uint256 mintProposalCounter, address proposedBy, uint256 toMint);
+    event mintLimitOverrideProposal(uint256 mintProposalCounter, address proposedBy, address mintReceive, uint256 toMint);
     event mintLimitOverride(address proposedBy, uint256 toMint);
 
     event minterProposalEvent(uint256 minterProposalCounter, address proposedBy, address newMinter, bool flag);
@@ -274,7 +274,7 @@ contract MintManager {
         proposal.mintAddress = account;
 
         // Emit event
-        emit mintLimitOverrideProposal(mintProposalCounter, msg.sender, toMint);
+        emit mintLimitOverrideProposal(mintProposalCounter, msg.sender, proposal.mintAddress, toMint);
 
         mintOverrideProposalsIds.push(mintProposalCounter);
 

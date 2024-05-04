@@ -20,7 +20,6 @@
     <script type="text/javascript" src="./node_modules/web3/dist/web3.min.js"></script>
     <script type="text/javascript" src="./node_modules/bignumber.js/bignumber.min.js"></script>
     <script type="text/javascript" src="./jsfrontend.js"></script>
-    <script type="text/javascript" src="./proposals.js"></script>
 </head>
 <body>
     <h1>Welcome!</h1>
@@ -89,17 +88,35 @@
         </div>
     </div>
     <p id="MintProposalResult"></p>
+
+    <div class="wrapper">
+        <div class="first" id="newRestrAdminForm">
+        </div>
+
+        <div class="second" id="newRestrAdminProposals">
+        </div>
+    </div>
+    <p id="RestrAdminProposalResult"></p>
+
+    <div class="wrapper">
+        <div class="first" id="changeTransferLimitForm">
+        </div>
+
+        <div class="second" id="changeTransferLimitProposals">
+        </div>
+    </div>
+    <p id="changeTransferLimitResult"></p>
 </body>
 
-<!-- https://dev.to/codemaker2015/develop-your-first-dapp-with-web3js-3mnc -->
 <script>
 
-// Example: Get the accounts from Ganache
+// log ganache accounts
 web3.eth.getAccounts().then(accounts => {
     console.log('Ganache Accounts:', accounts);
 }).catch(error => {
     console.error('Error getting accounts:', error);
 });
+
 </script>
 
 

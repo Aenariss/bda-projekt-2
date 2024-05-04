@@ -59,12 +59,12 @@ contract(' TEST SUITE 1 [ Basic functionality of token ]', function(accounts) {
             assert.equal(balanceInEth, 0);
 
             // send 100 ether tokens to each address
-            var receipt = await contract.transfer(account, W3.utils.toBN(100 * 10**decimals), {from: sender});
+            var receipt = await contract.transfer(account, W3.utils.toBN(1 * 10**decimals), {from: sender});
 
             assert(isEventInLogs("Transfer", receipt.receipt.logs));
 
             const newBalanceInEth = await ethBalanceOf(contract, account);
-            assert.equal(newBalanceInEth, 100);
+            assert.equal(newBalanceInEth, 1);
 
             console.log('Balance of:',account, "was:", balanceInEth, "is:", newBalanceInEth);
         }

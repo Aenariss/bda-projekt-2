@@ -25,3 +25,6 @@ NEpodporuju delegaci tokenu
 erc_config.js urcuje konfiguraci. Aby aplikace fungovala, musi platit TOTALSUPPLY >= TMAX >= TRANSFERLIMIT
 
 Automaticke aktualizace frontendu probihaji pouze kdyz se prida novy blok (jinak -- F5!)
+
+Uzivatel nema odlisene, na ktere proposaly uz klikal a na ktere ne (ma skryte jen svoje)
+Vypisuju vzdycky vsechny v historii zaznamenane proposaly

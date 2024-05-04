@@ -99,6 +99,10 @@ contract TransferManager {
     {
         dailyLimitChange storage proposal = dailyLimitChanges[proposalId];
 
+        if (proposal.approvals == 0) {
+            revert("This vote is over or never happened to begin with!");
+        }
+
         proposal.votes[msg.sender] = true;
         proposal.approvals++;
 
@@ -126,6 +130,10 @@ contract TransferManager {
         didntVoteAlreadyTransfer(proposalId, restrAdminProposals[proposalId].votes) returns (restrAdminProposal storage)
     {
         restrAdminProposal storage proposal = restrAdminProposals[proposalId];
+
+        if (proposal.approvals == 0) {
+            revert("This vote is over or never happened to begin with!");
+        }
 
         proposal.votes[msg.sender] = true;
         proposal.approvals++;

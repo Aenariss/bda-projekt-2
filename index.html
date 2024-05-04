@@ -4,11 +4,11 @@
     <style>
         /* https://stackoverflow.com/questions/5803023/how-to-place-two-divs-next-to-each-other */
         .wrapper {
-            width: 500px;
+            width: 100%;
             overflow: hidden; /* will contain if #first is longer than #second */
         }
         .first {
-            width: 300px;
+            width: 50%;
             float:left; /* add this */
         }
         .second {
@@ -19,291 +19,18 @@
     <title>BDA Dapp</title>
     <script type="text/javascript" src="./node_modules/web3/dist/web3.min.js"></script>
     <script type="text/javascript" src="./node_modules/bignumber.js/bignumber.min.js"></script>
-    <script type="text/javascript" src="./utils.js"></script>
-    <script>
-
-        var abiFile;
-        var contract;
-        var address;
-        var roles = [];
-        const ganacheProviderUrl = 'http://localhost:8545'; // Default Ganache URL
-        const web3 = new Web3(new Web3.providers.HttpProvider(ganacheProviderUrl));
-        const configFile = "./config/client_app_config.json";
-
-        
-        function editForNSeconds(time, element_id, text, color="black") {
-
-            const e = document.getElementById(element_id);
-            let formerText = e.innerHTML;
-            let formerColor = e.style.color;
-            e.style.color = color;
-            e.innerHTML = text;
-
-            function changeBack() {
-                e.innerHTML = formerText;
-                e.style.color = formerColor;
-            }
-
-            setInterval(changeBack, time*1000); 
-        }
-
-        async function handleSend(event) {
-
-            event.preventDefault(); // doesnt work without this
-            contract = await getContract();
-
-            let to = document.getElementById("addressToSend").value;
-            let value = document.getElementById("amountToSend").value;
-            let sender = window.ethereum.selectedAddress;
-
-            try {
-                let receipt = await contract.methods.transfer(to, value).send({ from: sender });
-
-                editForNSeconds(3, "sendResult", "Successfully sent!", "green")
-            }
-            catch (error) {
-                console.log(error)
-                editForNSeconds(3, "sendResult", "Couldn't send! Check address, your transfer limit and your funds!", "red")
-            }
-            await getUserBalance();
-            await showTransferLimit();
-        }
-
-        async function handleMint(event) {
-
-            event.preventDefault(); // doesnt work without this
-            contract = await getContract();
-
-            let to = document.getElementById("addressToMint").value;
-            let value = document.getElementById("amountToMint").value;
-            let sender = window.ethereum.selectedAddress;
-
-            try {
-                let receipt = await contract.methods.mint(to, value).send({ from: sender });
-
-                editForNSeconds(3, "sendResult", "Successfully minted!", "green")
-            }
-            catch (error) {
-                console.log(error)
-                editForNSeconds(3, "sendResult", "Couldn't mint! Check address or mint limit!", "red")
-            }
-            await getUserBalance();
-            await writeMintLimit();
-        }
-
-        // Pokud je mint admin, proposal pro TMAX
-        // Pokud je mint admin, zobrazovat proposaly (ziskat z historie emitted eventu?),kde user jeste nehlasoval (pripadne zobrazovat, ze uz hlasoval) -- eventuelne dodelat metody pro zisk unresolved proposalu
-        // Zvl;ast oddelit proposal pro TMAX, pro jednorazvy nadmerny mint, pro nove mint adminy...
-
-        // Poslouchat transfer eventy a po kazdem aktualizovat znovu vypis 
-        // Poslouchat dalsi ruzne a podle toho aktualizovat
-
-        async function getRoles() {
-            contract = await getContract();
-
-            let sender = window.ethereum.selectedAddress;
-            roles = await contract.methods.getRolesOfUser(sender).call();
-
-            return roles;
-        }
-
-        function formatBigNumber(number) {
-            // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/format
-            newWords = new Intl.NumberFormat("en-US").format(number);
-            return newWords.replaceAll(',', ' ');
-        }
-
-        function writeRoles() {
-            let rolesToWrite = "user";
-            if (roles[0]) {
-                if (rolesToWrite === "user")
-                    rolesToWrite = "";
-                rolesToWrite += "mintAdmin";
-            }
-            if (roles[1]) {
-                if (rolesToWrite === "user") {
-                    rolesToWrite = "";
-                    rolesToWrite += "restrAdmin";
-                }
-                else {
-                    rolesToWrite += ", restrAdmin";
-                }
-            }
-            document.getElementById("userRoles").innerHTML = rolesToWrite;
-        }
-
-        async function getUserBalance() {
-            let tmp = await contract.methods.balanceOf(address).call();
-            console.log("Balance of active metamask wallet is:", tmp);
-
-            var userFunds = formatBigNumber(tmp);
-            document.getElementById("userFunds").innerHTML = userFunds;
-        }
-
-        async function loadConfig() {
-            const response = await fetch(configFile);
-            const json = await response.json();
-
-            return json;
-        }
-
-        async function getContract() {
-            const response = await fetch(abiFile);
-            const json = await response.json();
-            const contractABI = json.abi;
-            const contractAddress = json.networks[Object.keys(json.networks)[Object.keys(json.networks).length - 1]].address;
-            
-            contract = new web3.eth.Contract(contractABI, contractAddress);
-            return contract;
-        }
-
-        async function writeAdmins() {
-            contract = await getContract();
-
-            let mintAdmins = await contract.methods.getMintAdmins().call();
-            let restrAdmins = await contract.methods.getRestrAdmins().call();
-            
-            function writeMintAdmins() {
-                const mintAdminsUl = document.getElementById("mintAdminAddresses");
-
-                for (let admin of mintAdmins) {
-                    let li = document.createElement("li");
-                    li.appendChild(document.createTextNode(admin));
-                    mintAdminsUl.appendChild(li);
-                }
-            }
-
-            function writeRestrAdmins() {
-                const restrAdminsUl = document.getElementById("restrAdminAddresses");
-
-                for (let admin of restrAdmins) {
-                    let li = document.createElement("li");
-                    li.appendChild(document.createTextNode(admin));
-                    restrAdminsUl.appendChild(li);
-                }
-            }
-
-            writeMintAdmins();
-            writeRestrAdmins();
-        }
-
-        async function showTransferLimit() {
-            let contract = await getContract();
-            let sender = window.ethereum.selectedAddress;
-            let already_transferd =  await contract.methods.sentToday(sender).call();
-
-            let max_transfer = await contract.methods.TRANSFERLIMIT(sender).call();
-
-            let can_send_today = BigNumber(max_transfer).minus(already_transferd)
-
-            let tLimit = document.getElementById("userTransferLimit");
-            tLimit.innerHTML = formatBigNumber(can_send_today);
-        }
-
-        async function writeMintLimit() {
-            if (roles[0] == true) {// is mintAdmin
-                let contract = await getContract();
-                let sender = window.ethereum.selectedAddress;
-                let mint_limit = await contract.methods.TMAX().call();
-                let minted_today = await contract.methods.mintedToday(sender).call()
-
-                let can_mint_today = BigNumber(mint_limit).minus(minted_today)
-                const p = document.getElementById("mintLimit").innerHTML = "You can mint <b>" + formatBigNumber(can_mint_today) + "</b> more tokens today!";
-            }
-        }
-
-        async function showMintForm() {
-            if (roles[0] == true) {
-                const e = document.getElementById("mintForm");
-                e.innerHTML = "\
-                                <h2>Mint tokens</h2>\
-                                <form onSubmit='handleMint(event)'>\
-                                    <label for='addressToMint'>Address where to mint (must be valid):</label><br>\
-                                    <input type='text' id='addressToMint' name='addressToMint'><br>\
-                                    <label for='amountToMint'>Mint Amount:</label><br>\
-                                    <input type='text' id='amountToMint' name='amountToMint'>\
-                                    <input type='submit' value='Mint'>\
-                                </form>\
-                               ";                               
-            }
-        }
-    
-        let main = async () => {
-            var config = await loadConfig();
-            if (window.ethereum) {
-                const ethereum = window.ethereum;
-
-                const accounts = await ethereum.request({ method: 'eth_accounts' });
-                const selectedAddress = ethereum.selectedAddress;
-                if (!selectedAddress) {
-                    await ethereum.enable();
-                }
-                address = selectedAddress;
-
-                abiFile = config.abiFilePath;
-                
-                contract = await getContract()
-
-                await getUserBalance();
-
-                roles = await getRoles();
-
-                if (roles.length != 2) {
-                    console.error("Couldn't load roles!");
-                }
-                else {
-                    writeRoles(roles);
-                }
-
-                await writeAdmins();
-                await showTransferLimit();
-                await writeMintLimit();
-                await showMintForm();
-
-            }
-            else {
-                // MetaMask is not installed
-                console.error("Couldn't acess metamask wallet");
-            }
-        }
-
-        // Process past events and check for new ones
-        var lastTmaxBlock = 0;
-        async function listenForTMAXProposals() {
-            const newestBlock = await web3.eth.getBlockNumber();
-            
-            if (newestBlock > lastTmaxBlock) {
-                const events = await contract.getPastEvents('TMAXProposalEvent', {
-                    fromBlock: lastTmaxBlock,
-                    toBlock: newestBlock
-                });
-
-                // Process events
-                events.forEach(event => {
-                    console.log("Timestamp:", event.returnValues.timestamp);
-                });
-            }
-            lastTmaxBlock = newestBlock;
-        }
-
-        main();
-
-
-
-        // Chceck emitted events every 5 seconds
-        setInterval(listenForTMAXProposals, 5000);
-
-    </script>
+    <script type="text/javascript" src="./jsfrontend.js"></script>
+    <script type="text/javascript" src="./proposals.js"></script>
 </head>
 <body>
     <h1>Welcome!</h1>
     <p>
-        This is a very very simple web UI to interact with the deployed smart contract. In case something doesn't work, try refreshing the page or check the README.md! All numbers in the config file are multiplied by 10**18. Contract information below:
+        This is a very very simple web UI to interact with the deployed smart contract. In case something doesn't work, try refreshing the page or check the README.md! This app has a few limitations, check them before usage! All numbers in the config file are multiplied by 10**18. Contract information below:
     </p>
     <div>
         <p> Your role is: <b><span id="userRoles">None</span></b> <br>
             Your balance is: <b><span id="userFunds">-1</span></b> IERC! Very rich!<br>
-            You can send <b><span id="userTransferLimit"></span></b> tokens more today until you reach TRANSFERLIMIT!
+            You can send <b><span id="userTransferLimit"></span></b> tokens more today until you reach TRANSFERLIMIT! Already sent <b><span id="userSentToday"></span></b> today!
         </p>
         <p id="mintLimit">
         </p>
@@ -327,19 +54,37 @@
     <div>
         <b><span id="sendResult"></span></b>
     </div>
-    <div>
-        <br>
-        <h2>List of all Mint admins:</h2>
-        <ul id="mintAdminAddresses">
-        </ul>
+    <div class="wrapper">
+        <div class="first">
+            <h2>List of all Mint admins:</h2>
+            <ul id="mintAdminAddresses">
+            </ul>
+        </div>
+
+        <div class="second">
+            <h2>List of all Restriction admins:</h2>
+            <ul id="restrAdminAddresses">
+            </ul>
+        </div>
     </div>
 
-    <div>
-        <br>
-        <h2>List of all Restriction admins:</h2>
-        <ul id="restrAdminAddresses">
-        </ul>
+    <div class="wrapper">
+        <div class="first" id="TmaxProposalForm">
+        </div>
+
+        <div class="second" id="TmaxProposalsList">
+        </div>
     </div>
+    <p id="TmaxProposalResult"></p>
+
+    <div class="wrapper">
+        <div class="first" id="newMinterForm">
+        </div>
+
+        <div class="second" id="newMinterProposals">
+        </div>
+    </div>
+    <p id="MintProposalResult"></p>
 </body>
 
 <!-- https://dev.to/codemaker2015/develop-your-first-dapp-with-web3js-3mnc -->

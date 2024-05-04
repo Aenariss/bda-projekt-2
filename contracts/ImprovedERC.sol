@@ -153,6 +153,7 @@ contract ImprovedERC is ERC20, AccessControl, MintManager, TransferManager  {
             bool passed = proposeMint(value, account, consensusThreshold);
             if (passed) {
                 // Dont increase mintedToday limit, this was special
+                _mintedToday[msg.sender][day] += value;
                 _mint(account, value);
                 emit Mint(msg.sender, account, value);
             }
@@ -181,7 +182,20 @@ contract ImprovedERC is ERC20, AccessControl, MintManager, TransferManager  {
      */
     function newMinterProposal(address minter, bool flag) public 
         onlyRole(_mintingAdmin)
-    {
+    {   
+        // adding
+        if (flag) {
+            if (hasRole(_mintingAdmin, minter)) {
+                revert("The user is already a mintAdmin!");
+            }
+        }
+        //removing
+        else {
+            if (!hasRole(_mintingAdmin, minter)) {
+                revert("The user isn't a mintAdmin!");
+            }
+        }
+
         bool pass = proposeMinter(minter, consensusThreshold, flag);
 
         if (pass) {

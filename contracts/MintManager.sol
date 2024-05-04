@@ -107,16 +107,15 @@ contract MintManager {
         return minterProposalsIds;
     }
 
-    /* Get how much has minted minted today */
-    function votedMinter(uint256 id) public view returns (bool) {
-        return minterProposals[id].votes[msg.sender];
-    }
-
     function voteForTMAX(uint256 proposalId, uint256 threshold) internal
         didntVoteAlreadyMint(proposalId, pendingTMAXProposals[proposalId].votes)
         returns (uint256)
     {
         TMAXProposal storage proposal = pendingTMAXProposals[proposalId];
+
+        if (proposal.approvals == 0) {
+            revert("This vote is over or never happened to begin with!");
+        }
 
         proposal.votes[msg.sender] = true;
         proposal.approvals++;
@@ -149,6 +148,10 @@ contract MintManager {
     {
         mintOverrideProposal storage proposal = mintOverrideProposals[proposalId];
 
+        if (proposal.approvals == 0) {
+            revert("This vote is over or never happened to begin with!");
+        }
+
         proposal.votes[msg.sender] = true;
         proposal.approvals++;
 
@@ -178,6 +181,10 @@ contract MintManager {
         returns (minterProposal storage)
     {
         minterProposal storage proposal = minterProposals[proposalId];
+
+        if (proposal.approvals == 0) {
+            revert("This vote is over or never happened to begin with!");
+        }
 
         proposal.votes[msg.sender] = true;
         proposal.approvals++;

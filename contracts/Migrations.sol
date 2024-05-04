@@ -1,3 +1,8 @@
+/**
+ * BDA Project 2 Migration
+ * Taken as it is from the DEMO exercise
+ */
+
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.25;
 

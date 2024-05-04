@@ -17,5 +17,8 @@
         "@truffle/hdwallet-provider": "^1.7.0",
         "bip39": "^3.0.4",
         "web3": "^1.9.0"
+    },
+    "devDependencies": {
+        "lite-server": "^2.6.1"
     }
 }

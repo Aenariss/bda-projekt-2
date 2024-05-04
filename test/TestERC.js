@@ -1,3 +1,9 @@
+/**
+ * BDA Project 2 Tests
+ * Very much inspired by the DEMO exercise
+ * Author: Vojtech Fiala
+ */
+
 var ImprovedERC = artifacts.require("ImprovedERC");
 var conf = require("../config/erc_config.js");
 var Web3 = require('web3');
@@ -27,7 +33,7 @@ contract(' TEST SUITE 1 [ Basic functionality of token ]', function(accounts) {
         var contract = await ImprovedERC.deployed();
 
         var totalSupply = await contract.getTotalSupplyCap();
-        assert( W3.utils.fromWei(totalSupply.toString()) == conf.INITIAL_SUPPLY)
+        assert( W3.utils.fromWei(totalSupply.toString()) == conf.SUPPLY_CAP)
         console.log("Total Supply is:", W3.utils.fromWei(totalSupply.toString()))
 
         // Mint more than the cap (2x+1 as much) -- this should create mintOVerrideProposal
@@ -236,12 +242,31 @@ contract(' TEST SUITE 1 [ Basic functionality of token ]', function(accounts) {
         assert(!isEventInLogs("restrAdminAdd", receipt.receipt.logs)); // cant be accepted yet
 
         // get existing proposals
-        var pendingMinters = await contract.getRestrProposals();
+        var pendingRestrAdmins = await contract.getRestrProposals();
 
         // It will be important to later check if he voted already
-        var receipt = await contract.voteForRestrAdmin(pendingMinters[0], {from: not_transfer_admin_1});
+        var receipt = await contract.voteForRestrAdmin(pendingRestrAdmins[0], {from: not_transfer_admin_1});
 
         assert(isEventInLogs("restrAdminAdd", receipt.receipt.logs));
+    });
+
+    it("Replay vote doesn't work", async() => {
+        var contract = await ImprovedERC.deployed();
+        var transfer_admin = sender;
+        var not_transfer_admin = accounts[9];
+
+        try {
+            await contract.newRestrAdmin(not_transfer_admin, true, {from: transfer_admin});
+            var pendingRestrAdmins = await contract.getRestrProposals();
+            await contract.voteForRestrAdmin(pendingRestrAdmins[0], {from: transfer_admin});
+        }
+        catch (error) {
+            console.log("Tried to replay voting for new Restr admin! Success");
+            const revertFound = error.message.search('revert') >= 0;
+            // Reverted
+            assert(revertFound, `Expected "revert", got ${error} instead`);
+        }
+
     });
     
 });

@@ -1,3 +1,9 @@
+/**
+ * BDA Project 2 Deployment
+ * Very much inspired by the DEMO exercise
+ * Author: Vojtech Fiala
+ */
+
 var W3 = require('web3');
 var ImprovedERC = artifacts.require("ImprovedERC");
 var MintManager = artifacts.require("MintManager");
@@ -22,13 +28,11 @@ module.exports = function(deployer, network, accounts) {
         console.log('Deployed MintManager with address', MintManager.address);
         console.log("\t \\/== Default gas limit:", MintManager.class_defaults.gas);
 
-        console.log('Deploying ImprovedERC to network', network);
-
         return deployer.deploy(TransferManager, conf.TRANSFERLIMIT).then(() => {
             console.log('Deployed TransferManager with address', TransferManager.address);
             console.log("\t \\/== Default gas limit:", ImprovedERC.class_defaults.gas);
 
-            return deployer.deploy(ImprovedERC, "ImprovedERC", "IERC", conf.INITIAL_SUPPLY, conf.TMAX, conf.TRANSFERLIMIT).then(() => {
+            return deployer.deploy(ImprovedERC, "ImprovedERC", "IERC", conf.SUPPLY_CAP, conf.TMAX, conf.TRANSFERLIMIT).then(() => {
                 console.log('Deployed ImprovedERC with address', ImprovedERC.address);
                 console.log("\t \\/== Default gas limit:", ImprovedERC.class_defaults.gas);
             });

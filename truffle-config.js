@@ -15,7 +15,7 @@
  * You'll also need a mnemonic - the twelve word phrase the wallet uses to generate
  * public/private key pairs. If you're publishing your code to GitHub make sure you load this
  * phrase from a file you've .gitignored so it doesn't accidentally become public.
- *
+ * ----- TAKEN FROM DEMO EXERCISE
  */
 
 const HDWalletProvider = require('@truffle/hdwallet-provider');
@@ -101,11 +101,11 @@ module.exports = {
             version: "0.8.25", // Fetch exact version from solc-bin (default: truffle's version)
             // docker: true,        // Use "0.5.1" you've installed locally with docker (default: false)
             settings: {          // See the solidity docs for advice about optimization and evmVersion
-                evmVersion: "london"
-            //  optimizer: {
-            //    enabled: false,
-            //    runs: 200
-            //  },
+                evmVersion: "london",
+                optimizer: {
+                    enabled: true,
+                    runs: 15000
+               }
             }
         }
     }

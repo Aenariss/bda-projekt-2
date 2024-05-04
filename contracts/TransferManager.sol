@@ -1,5 +1,6 @@
 /**
- * Author: Vojtech Fiala <xfiala61>
+ * BDA Project 2 TransferManager used to amange restrAdmins and transferlimit
+ * Author: Vojtech Fiala
  */
 
 // SPDX-License-Identifier: MIT
@@ -49,6 +50,7 @@ contract TransferManager {
     mapping(address => uint256) internal dailyLimit;
     mapping(address => mapping(uint256 => uint256)) internal dailySpendings;
 
+    /*/
     modifier didntVoteDaily(uint256 proposalId) {
         dailyLimitChange storage p = dailyLimitChanges[proposalId];
         if (p.votes[msg.sender]) {
@@ -60,6 +62,14 @@ contract TransferManager {
     modifier didntVoteAlreadyNewRestr(uint256 proposalId) {
         restrAdminProposal storage p = restrAdminProposals[proposalId];
         if (p.votes[msg.sender]) {
+            revert("Already voted!");
+        }
+        _;
+    }
+    */
+
+    modifier didntVoteAlreadyTransfer(uint256 proposalId, mapping(address => bool) storage votes) {
+        if (votes[msg.sender]) {
             revert("Already voted!");
         }
         _;
@@ -85,7 +95,7 @@ contract TransferManager {
 
     /* Vote for changing daily limit of user in proposal */
     function voteDailyLimitChange(uint256 proposalId, uint256 threshold) internal
-        didntVoteDaily(proposalId)
+        didntVoteAlreadyTransfer(proposalId, dailyLimitChanges[proposalId].votes)
     {
         dailyLimitChange storage proposal = dailyLimitChanges[proposalId];
 
@@ -113,7 +123,7 @@ contract TransferManager {
 
     /* Vote for changing daily limit of user in proposal */
     function voteNewRestrAdmin(uint256 proposalId, uint256 threshold) internal
-        didntVoteAlreadyNewRestr(proposalId) returns (restrAdminProposal storage)
+        didntVoteAlreadyTransfer(proposalId, restrAdminProposals[proposalId].votes) returns (restrAdminProposal storage)
     {
         restrAdminProposal storage proposal = restrAdminProposals[proposalId];
 
@@ -227,7 +237,7 @@ contract TransferManager {
 
     /* Get how much has minted minted today */
     function sentToday(address user) public view returns (uint256) {
-        uint256 day = block.timestamp / 1 days;
+        uint256 day = block.timestamp / (1 days);
         return dailySpendings[user][day];
     }
 }

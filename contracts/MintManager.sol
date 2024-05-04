@@ -1,5 +1,6 @@
 /**
- * Author: Vojtech Fiala <xfiala61>
+ * BDA Project 2 mintManager used to manage mintAdmins and TMAX
+ * Author: Vojtech Fiala
  */
 
 // SPDX-License-Identifier: MIT
@@ -63,6 +64,14 @@ contract MintManager {
         _TMAX = TMAX_val * 10 ** decimals;
     }
 
+    modifier didntVoteAlreadyMint(uint256 proposalId, mapping(address => bool) storage votes) {
+        if (votes[msg.sender]) {
+            revert("Already voted!");
+        }
+        _;
+    }
+
+    /*
     modifier didntVoteAlreadyTMAX(uint256 proposalId) {
         TMAXProposal storage p = pendingTMAXProposals[proposalId];
         if (p.votes[msg.sender]) {
@@ -86,6 +95,7 @@ contract MintManager {
         }
         _;
     }
+    */
 
     /* Get how much has minted minted today */
     function TMAX() public view returns (uint256) {
@@ -103,7 +113,7 @@ contract MintManager {
     }
 
     function voteForTMAX(uint256 proposalId, uint256 threshold) internal
-        didntVoteAlreadyTMAX(proposalId)
+        didntVoteAlreadyMint(proposalId, pendingTMAXProposals[proposalId].votes)
         returns (uint256)
     {
         TMAXProposal storage proposal = pendingTMAXProposals[proposalId];
@@ -134,7 +144,7 @@ contract MintManager {
 
     /* Vote for onetime exceeded mint proposal. Return true or false if it succeeded */
     function voteForMint(uint256 proposalId, uint256 threshold) internal
-        didntVoteAlreadyMint(proposalId)
+        didntVoteAlreadyMint(proposalId, mintOverrideProposals[proposalId].votes)
         returns (mintOverrideProposal storage)
     {
         mintOverrideProposal storage proposal = mintOverrideProposals[proposalId];
@@ -164,7 +174,7 @@ contract MintManager {
     }
 
     function voteForMinter(uint256 proposalId, uint256 threshold) internal
-        didntVoteAlreadyMinter(proposalId)
+        didntVoteAlreadyMint(proposalId, minterProposals[proposalId].votes)
         returns (minterProposal storage)
     {
         minterProposal storage proposal = minterProposals[proposalId];

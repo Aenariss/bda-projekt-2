@@ -1,6 +1,9 @@
 /**
- * Author: Vojtech Fiala <xfiala61>
+ * BDA Project 2 ImprovedERC
+ * Author: Vojtech Fiala
+ * The main contract that is interacted with. Inspired by DEMO exercise
  */
+
 
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.25;
@@ -19,8 +22,8 @@ contract ImprovedERC is ERC20, AccessControl, MintManager, TransferManager  {
     uint256 private _totalSupplyCap;
     uint256 private consensusThreshold;
     uint256 private consensusThresholdRestr;
-    uint256 private mintAdmins;
-    uint256 private restrAdmins;
+    address[] public mintAdmins;
+    address[] public restrAdmins;
     bytes32 private constant _mintingAdmin = keccak256("mintingAdmin");
     bytes32 private constant _restrAdmin = keccak256("restrAdmin");
 
@@ -33,13 +36,22 @@ contract ImprovedERC is ERC20, AccessControl, MintManager, TransferManager  {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(_mintingAdmin, msg.sender);
         _grantRole(_restrAdmin, msg.sender);
-        mintAdmins = 1;
-        restrAdmins = 1;
-        consensusThresholdRestr = (restrAdmins / 2) + 1;
-        consensusThreshold = (mintAdmins / 2) + 1;
+
+        mintAdmins.push(msg.sender);
+        restrAdmins.push(msg.sender);
+        consensusThresholdRestr = (restrAdmins.length / 2) + 1;
+        consensusThreshold = (mintAdmins.length / 2) + 1;
 
         _totalSupplyCap = totalSupply * 10 ** decimals(); // hard cap the number of tokens
         mint(msg.sender, TMAX() / 2); // give half the total amount to the account
+    }
+
+    function getRolesOfUser(address user) public view returns (bool[] memory) {
+
+        bool[] memory roles = new bool[](2);
+        roles[0] = hasRole(_mintingAdmin, user);
+        roles[1] = hasRole(_restrAdmin, user);
+        return roles;
     }
     
 
@@ -61,9 +73,23 @@ contract ImprovedERC is ERC20, AccessControl, MintManager, TransferManager  {
         return _totalSupplyCap;
     }
 
-    /* Get the total supply cap */
-    function getConsensus() public view returns (uint256) {
-        return consensusThreshold;
+      /* Get users with mintADmin roles */
+    function getMintAdmins() public view returns (address[] memory) {
+        // optimization
+        address[] memory result = new address[](mintAdmins.length);
+        for (uint i = 0; i < mintAdmins.length; i++) {
+            result[i] = mintAdmins[i];
+        }
+        return result;
+    }
+
+      /* Get users with restrAdmin roles */
+    function getRestrAdmins() public view returns (address[] memory) {
+        address[] memory result = new address[](restrAdmins.length);
+        for (uint i = 0; i < restrAdmins.length; i++) {
+            result[i] = restrAdmins[i];
+        }
+        return result;
     }
 
 
@@ -81,10 +107,9 @@ contract ImprovedERC is ERC20, AccessControl, MintManager, TransferManager  {
         voteForTMAX(proposalId, consensusThreshold);
     }
 
-
     function transfer(address to, uint256 value) public override returns (bool)
     {
-        uint256 day = block.timestamp / 1 days;
+        uint256 day = block.timestamp / (1 days);
 
         if (dailySpendings[msg.sender][day] + value > TRANSFERLIMIT(msg.sender)) {
             revert("You mustn't cross the TRANSFERLIMIT!");
@@ -121,7 +146,7 @@ contract ImprovedERC is ERC20, AccessControl, MintManager, TransferManager  {
     {   
         require(value > 0, "Can't mint zero");
 
-        uint256 day = block.timestamp / 1 days;
+        uint256 day = block.timestamp / (1 days);
 
         if (_mintedToday[msg.sender][day] + value > TMAX()) {
             // Create request for one time minting increase
@@ -162,16 +187,24 @@ contract ImprovedERC is ERC20, AccessControl, MintManager, TransferManager  {
         if (pass) {
             // appointing
             if (flag) {
-                mintAdmins += 1;
-                consensusThreshold = (mintAdmins / 2) + 1;
+                mintAdmins.push(minter);
+                consensusThreshold = (mintAdmins.length / 2) + 1;
                 _grantRole(_mintingAdmin, minter);
             }
             else {
-                mintAdmins -= 1;
-                consensusThreshold = (mintAdmins / 2) + 1;
+                // Delete minter from mintAdmins
+                for (uint256 i = 0; i < mintAdmins.length; i++) {
+                    if (mintAdmins[i] == minter) {
+                        // Replace the element to delete with the last element
+                        mintAdmins[i] = mintAdmins[mintAdmins.length - 1];
+                        // Remove the last element
+                        mintAdmins.pop();
+                        break;
+                    }
+                }
+                consensusThreshold = (mintAdmins.length / 2) + 1;
                 _revokeRole(_mintingAdmin, minter);
             }
-
         }
     }
 
@@ -183,13 +216,22 @@ contract ImprovedERC is ERC20, AccessControl, MintManager, TransferManager  {
         // vote is over
         if (proposal.approvals >= consensusThreshold) {
             if (proposal.flag) {
-                mintAdmins += 1;
-                consensusThreshold = (mintAdmins / 2) + 1;
+                mintAdmins.push(proposal.newMinter);
+                consensusThreshold = (mintAdmins.length / 2) + 1;
                 _grantRole(_mintingAdmin, proposal.newMinter);
             }
             else {
-                mintAdmins -= 1;
-                consensusThreshold = (mintAdmins / 2) + 1;
+                // Delete minter from mintAdmins
+                for (uint256 i = 0; i < mintAdmins.length; i++) {
+                    if (mintAdmins[i] == proposal.newMinter) {
+                        // Replace the element to delete with the last element
+                        mintAdmins[i] = mintAdmins[mintAdmins.length - 1];
+                        // Remove the last element
+                        mintAdmins.pop();
+                        break;
+                    }
+                }
+                consensusThreshold = (mintAdmins.length / 2) + 1;
                 _revokeRole(_mintingAdmin, proposal.newMinter);
             }
         }
@@ -214,13 +256,22 @@ contract ImprovedERC is ERC20, AccessControl, MintManager, TransferManager  {
         // vote is over
         if (proposal.approvals >= consensusThresholdRestr) {
             if (proposal.flag) {
-                restrAdmins += 1;
-                consensusThresholdRestr = (restrAdmins / 2) + 1;
+                restrAdmins.push(proposal.userToChange);
+                consensusThresholdRestr = (restrAdmins.length / 2) + 1;
                 _grantRole(_restrAdmin, proposal.userToChange);
             }
             else {
-                restrAdmins -= 1;
-                consensusThresholdRestr = (restrAdmins / 2) + 1;
+                // Delete restriction admin from restrAdmins
+                for (uint256 i = 0; i < restrAdmins.length; i++) {
+                    if (restrAdmins[i] == proposal.userToChange) {
+                        // Replace the element to delete with the last element
+                        restrAdmins[i] = restrAdmins[restrAdmins.length - 1];
+                        // Remove the last element
+                        restrAdmins.pop();
+                        break;
+                    }
+                }
+                consensusThresholdRestr = (restrAdmins.length / 2) + 1;
                 _revokeRole(_restrAdmin, proposal.userToChange);
             }
         }
@@ -234,17 +285,26 @@ contract ImprovedERC is ERC20, AccessControl, MintManager, TransferManager  {
         if (pass) {
             // appointing
             if (flag) {
-                restrAdmins += 1;
-                consensusThresholdRestr = (restrAdmins / 2) + 1;
+                restrAdmins.push(user);
+                consensusThresholdRestr = (restrAdmins.length / 2) + 1;
                 _grantRole(_restrAdmin, user);
             }
             else {
-                restrAdmins -= 1;
-                consensusThresholdRestr = (restrAdmins / 2) + 1;
+                // Delete user from restrAdmins
+                for (uint256 i = 0; i < restrAdmins.length; i++) {
+                    if (restrAdmins[i] == user) {
+                        // Replace the element to delete with the last element
+                        restrAdmins[i] = restrAdmins[restrAdmins.length - 1];
+                        // Remove the last element
+                        restrAdmins.pop();
+                        break;
+                    }
+                }
+                consensusThresholdRestr = (restrAdmins.length / 2) + 1;
                 _revokeRole(_restrAdmin, user);
             }
 
         }
     }
-
+    
 }

@@ -68,11 +68,6 @@ async function handleMint(event) {
     await writeMintLimit();
 }
 
-// Zvl;ast oddelit proposal pro TMAX, pro jednorazvy nadmerny mint, pro nove mint adminy...
-
-// Poslouchat transfer eventy a po kazdem aktualizovat znovu vypis 
-// Poslouchat dalsi ruzne a podle toho aktualizovat
-
 async function getRoles() {
     contract = await getContract();
 
@@ -396,7 +391,7 @@ async function listenForTMAXProposals() {
 
 // Process past events and check for new ones
 var lastNewMinterBlock = 0;
-async function listenForTMAXProposals() {
+async function listenForMintAdminProposals() {
     if (roles.length == 2) {
         if (roles[0] == true) {
             const newestBlock = await web3.eth.getBlockNumber();
@@ -418,6 +413,8 @@ async function listenForTMAXProposals() {
 }
 
 main();
-// Chceck emitted events every 5 seconds
-setInterval(listenForTMAXProposals, 3000);
 
+setInterval(listenForTMAXProposals, 3000);
+setInterval(listenForMintAdminProposals, 3000);
+
+// restrAdmini stejne jako mintAdmini

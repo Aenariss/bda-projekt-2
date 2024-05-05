@@ -118,7 +118,7 @@ contract MintManager {
         }
 
         proposal.votes[msg.sender] = true;
-        proposal.approvals++;
+        proposal.approvals = proposal.approvals + 1;
 
         // if enough approvals, change it and delete the proposal
         if (proposal.approvals >= threshold) {
@@ -136,7 +136,7 @@ contract MintManager {
                 }
             }
 
-            delete pendingTMAXProposals[proposalId];
+            //delete pendingTMAXProposals[proposalId];
         }
         return _TMAX;
     }
@@ -153,7 +153,7 @@ contract MintManager {
         }
 
         proposal.votes[msg.sender] = true;
-        proposal.approvals++;
+        proposal.approvals = proposal.approvals + 1;
 
         // if enough approvals, change it and delete the proposal
         if (proposal.approvals >= threshold) {
@@ -170,7 +170,7 @@ contract MintManager {
                 }
             }
 
-            delete mintOverrideProposals[proposalId];
+            //delete mintOverrideProposals[proposalId];
             return proposal;
         }
         return proposal;
@@ -187,7 +187,7 @@ contract MintManager {
         }
 
         proposal.votes[msg.sender] = true;
-        proposal.approvals++;
+        proposal.approvals = proposal.approvals + 1;
 
         // if enough approvals, change it and delete the proposal
         if (proposal.approvals >= threshold) {
@@ -208,7 +208,7 @@ contract MintManager {
                     break;
                 }
             }
-            delete minterProposals[proposalId];
+            //delete minterProposals[proposalId];
         }
         return proposal;
     }
@@ -224,7 +224,7 @@ contract MintManager {
         proposal.flag = flag;
         proposal.newMinter = account;
         proposal.votes[msg.sender] = true;
-        proposal.approvals = 1;
+        proposal.approvals += 1;
 
         // Emit event
         emit minterProposalEvent(minterProposalCounter, proposal.proposer, proposal.newMinter, flag);
@@ -251,7 +251,7 @@ contract MintManager {
                     break;
                 }
             }
-            delete minterProposals[TMAXProposalCounter];
+            //delete minterProposals[TMAXProposalCounter];
             
             return true;
 
@@ -293,7 +293,7 @@ contract MintManager {
                 }
             }
 
-            delete mintOverrideProposals[mintProposalCounter];
+            //delete mintOverrideProposals[mintProposalCounter];
             return true;
         }
 
@@ -333,7 +333,7 @@ contract MintManager {
                 }
             }
 
-            delete pendingTMAXProposals[TMAXProposalCounter];
+            //delete pendingTMAXProposals[TMAXProposalCounter];
         }
 
         return _TMAX;

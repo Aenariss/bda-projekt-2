@@ -22,7 +22,6 @@ const HDWalletProvider = require('@truffle/hdwallet-provider');
 // const infuraKey = "fj4jl.....";
 //
 const fs = require('fs');
-const mnemonic = fs.readFileSync(".secret").toString().trim(); // This is just a testnet secret
 
 module.exports = {
     /**
@@ -60,34 +59,6 @@ module.exports = {
             // from: < address > , // Account to send txs from (default: accounts[0])
             websockets: true, // Enable EventEmitter interface for web3 (default: false)
         },
-
-
-        goerli: {
-            provider: () => new HDWalletProvider(mnemonic, "https://goerli.infura.io/v3/31a88c7b8b114b38b6766b892dbdd54f"),
-            network_id: 5, // Goerli's network ID
-            gas: 4000222,
-            confirmations: 2, // # of confs to wait between deployments. (default: 0)
-            timeoutBlocks: 200, // # of blocks before a deployment times out  (minimum/default: 50)
-            skipDryRun: false // Skip dry run before migrations? (default: false for public nets )
-        },
-
-
-        // to fund your wallet, use faucet - https://www.infura.io/faucet or https://sepolia-faucet.pk910.de
-        sepolia: {
-            provider: () => new HDWalletProvider(mnemonic, "https://sepolia.infura.io/v3/31a88c7b8b114b38b6766b892dbdd54f"),
-            network_id: 11155111, // Sepolia's network ID
-            gas: 4000222,
-            confirmations: 2, // # of confs to wait between deployments. (default: 0)
-            timeoutBlocks: 200, // # of blocks before a deployment times out  (minimum/default: 50)
-            skipDryRun: false // Skip dry run before migrations? (default: false for public nets )
-        },
-
-        // Useful for private networks
-        // private: {
-        // provider: () => new HDWalletProvider(mnemonic, `https://network.io`),
-        // network_id: 2111,   // This network is yours, in the cloud.
-        // production: true    // Treats this network as if it was a public net. (default: false)
-        // }
     },
 
     // Set default mocha options here, use special reporters etc.

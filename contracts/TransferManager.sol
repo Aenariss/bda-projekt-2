@@ -120,7 +120,7 @@ contract TransferManager {
                     break;
                 }
             }
-            delete dailyLimitChanges[proposalId];
+            //delete dailyLimitChanges[proposalId];
             dailyLimit[proposal.userToChange] = proposal.newLimit;
         }
     }
@@ -158,7 +158,7 @@ contract TransferManager {
                     break;
                 }
             }
-            delete restrAdminProposals[proposalId];
+            //delete restrAdminProposals[proposalId];
             return proposal;
         }
         return proposal;

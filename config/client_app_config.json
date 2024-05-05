@@ -1,4 +1,3 @@
 {
-    "abiFilePath": "./build/contracts/ImprovedERC.json",
-    "contractAddress": "0xA3cc46508377B214c0834a657420865853C73eD5"
+    "abiFilePath": "./build/contracts/ImprovedERC.json"
 }

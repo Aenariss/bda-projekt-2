@@ -1,0 +1,1 @@
+zip -r xfiala61.zip documentation.pdf jsfrontend.js index.html package-lock.json package.json README.md truffle-config.js test/ migrations/ contracts/ config/

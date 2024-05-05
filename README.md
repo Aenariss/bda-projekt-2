@@ -16,6 +16,8 @@ The tests are in the test/ folder. Can be run as ``truffle test``.
 
 migrations/ contains deployment scripts.
 
+To make sure everything is disaplyed correctly, every time you click something, reload the page (F5).
+
 
 #### Functionality limitations
 - Token delegation is not supported
@@ -29,6 +31,7 @@ to ensure the user doesn't vote on nonexistent proposals and to ensure he doesn'
 - Updating the frontend only happens arbitrarily when a new block is added to the chain. The latest data can always be retrieved after a refresh (F5)
 - In case of problems, see the console. 
 - If something is not displayed correctly, eg. a proposal didn't appear/diosappeared, it should be enough to refresh the page (F5) -- Better do this each time you click something.
+- Sometimes an event appears that should not appear
 
 #### Requirements:
 - npm

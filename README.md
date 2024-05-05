@@ -20,7 +20,7 @@ migrations/ contains deployment scripts.
 #### Functionality limitations
 - Token delegation is not supported
 - It is not distinguished which proposals the user has already voted on and all that have been recorded are displayed. However, the user does not have the option to vote for their own proposals again. This is frontend-only issue. On the backend, there's a check
-to ensure the user doesn't vote on nonexistent proposals and to ensure he doesn't repeatedly vote for the same proposals.
+to ensure the user doesn't vote on nonexistent proposals and to ensure he doesn't repeatedly vote for the same proposals. The user also can't vote for an already approved proposal.
 
 #### Technical limitations
 - The application does not support changing the active wallet account - in such a case you need to restart the application (F5)
@@ -28,7 +28,7 @@ to ensure the user doesn't vote on nonexistent proposals and to ensure he doesn'
 - For the application to work, the following must be true for ``erc_config.js`` - ``TOTALSUPPLY >= TMAX >= TRANSFERLIMIT``
 - Updating the frontend only happens arbitrarily when a new block is added to the chain. The latest data can always be retrieved after a refresh (F5)
 - In case of problems, see the console. 
-- If something is not displayed correctly, it should be enough to refresh the page (F5)
+- If something is not displayed correctly, eg. a proposal didn't appear/diosappeared, it should be enough to refresh the page (F5) -- Better do this each time you click something.
 
 #### Requirements:
 - npm

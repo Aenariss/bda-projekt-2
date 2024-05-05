@@ -25,6 +25,7 @@ contract TransferManager {
         uint256 newLimit;
         mapping(address => bool) votes;
         uint256 approvals;
+        bool approved;
     }
 
     struct restrAdminProposal {
@@ -33,6 +34,7 @@ contract TransferManager {
         address userToChange;
         mapping(address => bool) votes;
         uint256 approvals;
+        bool approved;
     }
 
     mapping(uint256 => dailyLimitChange) internal dailyLimitChanges;
@@ -85,6 +87,10 @@ contract TransferManager {
             revert("This vote is over or never happened to begin with!");
         }
 
+        if (proposal.approved) {
+            revert("Already passed!");
+        }
+
         proposal.votes[msg.sender] = true;
         proposal.approvals++;
 
@@ -102,6 +108,7 @@ contract TransferManager {
                     break;
                 }
             }
+            proposal.approved = true;
             //delete dailyLimitChanges[proposalId];
             dailyLimit[proposal.userToChange] = proposal.newLimit;
         }
@@ -115,6 +122,10 @@ contract TransferManager {
 
         if (proposal.approvals == 0) {
             revert("This vote is over or never happened to begin with!");
+        }
+
+        if (proposal.approved) {
+            revert("Already passed!");
         }
 
         proposal.votes[msg.sender] = true;
@@ -140,6 +151,7 @@ contract TransferManager {
                     break;
                 }
             }
+            proposal.approved = true;
             //delete restrAdminProposals[proposalId];
             return proposal;
         }
@@ -177,6 +189,7 @@ contract TransferManager {
                     break;
                 }
             }
+            proposal.approved = true;
             dailyLimit[user] = limit;
         }
     }
@@ -218,6 +231,7 @@ contract TransferManager {
                     break;
                 }
             }
+            proposal.approved = true;
             delete restrAdminProposals[restrAdminProposalCounter];
             return true;
 

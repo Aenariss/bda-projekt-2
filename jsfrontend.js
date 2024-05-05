@@ -67,7 +67,7 @@ async function genericVote(proposalId, resultElement, callback) {
         editForNSeconds(3, resultElement, "Successfully voted!", "green") // show the result
     }
     catch (error) {
-        console.log(error)
+        console.warn(error)
         editForNSeconds(3, resultElement, "Couldn't vote! Voting again? Not an admin?", "red")
     }
 }
@@ -76,9 +76,11 @@ async function genericVote(proposalId, resultElement, callback) {
 async function voteProposalTMAX(proposalId, flag) {
 
     if (flag) {
+        await contract.methods.voteForTMAX;
         await genericVote(proposalId, "TmaxProposalResult", contract.methods.voteForTMAX);
     }
     else {
+        await contract.methods.voteMintIncrease;
         await genericVote(proposalId, "TmaxProposalResult", contract.methods.voteMintIncrease);
     }
 
@@ -90,6 +92,7 @@ async function voteProposalTMAX(proposalId, flag) {
 
 /* Function to facilitate voting about Minter Proposals */
 async function voteProposalMinter(proposalId) {
+    await contract.methods.voteForMinter;
     await genericVote(proposalId, "MintProposalResult", contract.methods.voteForMinter);
     lastNewMinterBlock = 0;
     document.getElementById("newRestrAdminProposals").innerHTML = "";  
@@ -101,6 +104,7 @@ async function voteProposalMinter(proposalId) {
 
 /* Function to facilitate voting about RestrAdmin Proposals */
 async function voteProposalRestrAdmin(proposalId) {
+    await contract.methods.voteForRestrAdmin;
     await genericVote(proposalId, "RestrAdminProposalResult", contract.methods.voteForRestrAdmin);
     lastRestAdminBlock = 0;
     document.getElementById("newRestrAdminProposals").innerHTML = "";  
@@ -112,6 +116,7 @@ async function voteProposalRestrAdmin(proposalId) {
 
 /* Function to facilitate voting about TRANSFERLIMIT Proposals */
 async function voteProposalTransferLimit(proposalId) {
+    await contract.methods.voteDailyLimit;
     await genericVote(proposalId, "changeTransferLimitResult", contract.methods.voteDailyLimit);
     lastTransferLimitChangeBlock = 0;
     document.getElementById("changeTransferLimitProposals").innerHTML = "";  
@@ -136,7 +141,7 @@ async function genericHandler(event, resultElement, errorMsg, callback, correctM
         editForNSeconds(3, resultElement, correctMsg, "green")
     }
     catch (error) {
-        console.error(error)
+        console.warn(error)
         editForNSeconds(3, resultElement, errorMsg, "red")
     } 
 }
@@ -637,6 +642,12 @@ async function genericProposalListener(eventName, lastBlock, role_index, callbac
 
                 // Process events
                 events.forEach(event => {
+                    if (eventName == "TMAXProposalEvent") {
+                        callback(event, true);
+                    }
+                    else if (eventName == "mintLimitOverrideProposal") {
+                        callback(event, false);
+                    }
                     callback(event);
                 });
             }

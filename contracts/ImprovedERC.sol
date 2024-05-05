@@ -171,6 +171,7 @@ contract ImprovedERC is ERC20, AccessControl, MintManager, TransferManager  {
         onlyRole(_mintingAdmin)
     {
         mintOverrideProposal storage passed = voteForMint(proposalId, consensusThreshold);
+
         if (passed.approvals >= consensusThreshold) {
             _mint(passed.mintAddress, passed.toMint);
             emit Mint(passed.proposer, passed.mintAddress, passed.toMint);
@@ -227,6 +228,17 @@ contract ImprovedERC is ERC20, AccessControl, MintManager, TransferManager  {
         onlyRole(_mintingAdmin)
     {
         minterProposal storage proposal = voteForMinter(proposalId, consensusThreshold);
+
+        if (proposal.flag) {
+            if (hasRole(_mintingAdmin, proposal.newMinter)) {
+                revert("The user is already a mintAdmin!");
+            }
+        }
+        else {
+            if (!hasRole(_mintingAdmin, proposal.newMinter)) {
+                revert("The user isn't a mintAdmin!");
+            }
+        }
         // vote is over
         if (proposal.approvals >= consensusThreshold) {
             if (proposal.flag) {

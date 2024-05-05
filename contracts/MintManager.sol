@@ -29,6 +29,7 @@ contract MintManager {
         uint256 newTMAX;
         mapping(address => bool) votes;
         uint256 approvals;
+        bool approved;
     }
 
     struct mintOverrideProposal {
@@ -37,6 +38,7 @@ contract MintManager {
         uint256 toMint;
         mapping(address => bool) votes;
         uint256 approvals;
+        bool approved;
     }
 
     struct minterProposal {
@@ -45,6 +47,7 @@ contract MintManager {
         address newMinter;
         mapping(address => bool) votes;
         uint256 approvals;
+        bool approved;
     }
 
     mapping(uint256 => TMAXProposal) public pendingTMAXProposals;
@@ -91,6 +94,10 @@ contract MintManager {
             revert("This vote is over or never happened to begin with!");
         }
 
+        if (proposal.approved) {
+            revert("Already passed!");
+        }
+
         proposal.votes[msg.sender] = true;
         proposal.approvals = proposal.approvals + 1;
 
@@ -109,7 +116,7 @@ contract MintManager {
                     break;
                 }
             }
-
+            proposal.approved = true;
             //delete pendingTMAXProposals[proposalId];
         }
         return _TMAX;
@@ -124,6 +131,10 @@ contract MintManager {
 
         if (proposal.approvals == 0) {
             revert("This vote is over or never happened to begin with!");
+        }
+
+        if (proposal.approved) {
+            revert("Already passed!");
         }
 
         proposal.votes[msg.sender] = true;
@@ -143,7 +154,7 @@ contract MintManager {
                     break;
                 }
             }
-
+            proposal.approved = true;
             //delete mintOverrideProposals[proposalId];
             return proposal;
         }
@@ -157,7 +168,11 @@ contract MintManager {
         minterProposal storage proposal = minterProposals[proposalId];
 
         if (proposal.approvals == 0) {
-            revert("This vote is over or never happened to begin with!");
+            revert("This vote never happened to begin with!");
+        }
+
+        if (proposal.approved) {
+            revert("Already passed!");
         }
 
         proposal.votes[msg.sender] = true;
@@ -182,6 +197,7 @@ contract MintManager {
                     break;
                 }
             }
+            proposal.approved = true;
             //delete minterProposals[proposalId];
         }
         return proposal;
@@ -225,6 +241,7 @@ contract MintManager {
                     break;
                 }
             }
+            proposal.approved = true;
             //delete minterProposals[TMAXProposalCounter];
             
             return true;
@@ -265,8 +282,8 @@ contract MintManager {
                     mintOverrideProposalsIds.pop();
                     break;
                 }
-            }
-
+            }   
+            proposal.approved = true;
             //delete mintOverrideProposals[mintProposalCounter];
             return true;
         }
@@ -306,7 +323,7 @@ contract MintManager {
                     break;
                 }
             }
-
+            proposal.approved = true;
             //delete pendingTMAXProposals[TMAXProposalCounter];
         }
 

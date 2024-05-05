@@ -71,32 +71,6 @@ contract MintManager {
         _;
     }
 
-    /*
-    modifier didntVoteAlreadyTMAX(uint256 proposalId) {
-        TMAXProposal storage p = pendingTMAXProposals[proposalId];
-        if (p.votes[msg.sender]) {
-            revert("Already voted!");
-        }
-        _;
-    }
-
-    modifier didntVoteAlreadyMint(uint256 proposalId) {
-        mintOverrideProposal storage p = mintOverrideProposals[proposalId];
-        if (p.votes[msg.sender]) {
-            revert("Already voted!");
-        }
-        _;
-    }
-
-    modifier didntVoteAlreadyMinter(uint256 proposalId) {
-        minterProposal storage p = minterProposals[proposalId];
-        if (p.votes[msg.sender]) {
-            revert("Already voted!");
-        }
-        _;
-    }
-    */
-
     /* Get how much has minted minted today */
     function TMAX() public view returns (uint256) {
         return _TMAX;

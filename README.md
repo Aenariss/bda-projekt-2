@@ -2,13 +2,20 @@
 
 ### Author: Vojtěch Fiala
 
-#### Informace about the implementation
+#### Information about the implementation
+This implementation is heavily based on the DEMO exercise.
 A listing of all available Ganache accounts (for testing) is generated in the console right at the start. The private keys can be found out when you turn on Ganache - two of them are listed below.
 
 The solution uses three config files in the config/ folder.
 - ``erc_config.js`` - contains settings for the deployed ERC20 token. All values in there are multiplied by 10**18. Therefore, it is not advisable to enter too high values
 - ``client_config.json`` - settings for lite-server
 - ``client_app_config.json`` - path to the ABI of the deployed contract. The ABI also contains the address of the contract in it. Generated automatically when the contract is deployed.
+
+The tests are in the test/ folder. Can be run as ``truffle test``.
+
+
+migrations/ contains deployment scripts.
+
 
 #### Functionality limitations
 - Token delegation is not supported

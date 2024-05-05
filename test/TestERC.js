@@ -39,6 +39,7 @@ contract(' TEST SUITE 1 [ Basic functionality of token ]', function(accounts) {
         // Mint more than the cap (2x+1 as much) -- this should create mintOVerrideProposal
         const mintAmount = BigInt(((conf.TMAX / 2) + 1) * 10**decimals);
         var receipt = await contract.mint(sender, mintAmount, {from: sender});
+        console.log('Gas used:', receipt.receipt.gasUsed);
 
         // Since there's only 1 admin for now, lets check the proposal was made and approved
         assert(isEventInLogs("mintLimitOverrideProposal", receipt.receipt.logs));
@@ -60,6 +61,7 @@ contract(' TEST SUITE 1 [ Basic functionality of token ]', function(accounts) {
 
             // send 100 ether tokens to each address
             var receipt = await contract.transfer(account, W3.utils.toBN(1 * 10**decimals), {from: sender});
+            console.log('Gas used:', receipt.receipt.gasUsed);
 
             assert(isEventInLogs("Transfer", receipt.receipt.logs));
 
@@ -81,6 +83,7 @@ contract(' TEST SUITE 1 [ Basic functionality of token ]', function(accounts) {
 
         try {
             var receipt = await contract.transfer(test_acc_2, curr_bal+1, {from: test_acc});
+            console.log('Gas used:', receipt.receipt.gasUsed);
             assert(!isEventInLogs("Transfer", receipt.receipt.logs));
         }
         catch (error) {
@@ -102,6 +105,7 @@ contract(' TEST SUITE 1 [ Basic functionality of token ]', function(accounts) {
         
         var balInEth = await ethBalanceOf(contract, minter);
         var receipt = await contract.mint(minter, mint_amount, {from: minter});
+        console.log('Gas used:', receipt.receipt.gasUsed);
         var newBalInEth = await ethBalanceOf(contract, minter);
 
         // Check admin can mint
@@ -112,6 +116,7 @@ contract(' TEST SUITE 1 [ Basic functionality of token ]', function(accounts) {
         // Revert must happen
         try {
             var receipt = await contract.mint(minter, mint_amount, {from: not_minter});
+            console.log('Gas used:', receipt.receipt.gasUsed);
         }
         catch (error) {
             const revertFound = error.message.search('revert') >= 0;
@@ -139,6 +144,7 @@ contract(' TEST SUITE 1 [ Basic functionality of token ]', function(accounts) {
         /* Try to mint +1 the mintable limit */
         try {
             var receipt = await contract.mint(minter, BigInt((1000 * 10**decimals)), {from: minter});
+            console.log('Gas used:', receipt.receipt.gasUsed);
         }
         catch (error) {
 
@@ -162,6 +168,7 @@ contract(' TEST SUITE 1 [ Basic functionality of token ]', function(accounts) {
 
         var eth_limit = convertBNToEth(old_tmax)
         var receipt = await contract.newTMAXProposal(BigInt((parseInt(eth_limit)+1000) * 10**decimals), {from: minter})
+        console.log('Gas used:', receipt.receipt.gasUsed);
         var new_tmax = await contract.TMAX();
 
         // There has to be proposal and change events ucz only 1 admin
@@ -173,6 +180,7 @@ contract(' TEST SUITE 1 [ Basic functionality of token ]', function(accounts) {
         /* Try to change tmax when not minter */
         try {
             var receipt = await contract.newTMAXProposal(BigInt((eth_limit+2000) * 10**decimals), {from: not_minter});
+            console.log('Gas used:', receipt.receipt.gasUsed);
         }
         catch (error) {
 
@@ -193,11 +201,13 @@ contract(' TEST SUITE 1 [ Basic functionality of token ]', function(accounts) {
         var not_minter_2 = accounts[5];
 
         var receipt = await contract.newMinterProposal(not_minter_1, true, {from: minter_original});
+        console.log('Gas used:', receipt.receipt.gasUsed);
 
         assert(isEventInLogs("minterProposalEvent", receipt.receipt.logs));
         assert(isEventInLogs("minterAcceptanceEvent", receipt.receipt.logs));
 
         var receipt = await contract.newMinterProposal(not_minter_2, true, {from: minter_original});
+        console.log('Gas used:', receipt.receipt.gasUsed);
         assert(isEventInLogs("minterProposalEvent", receipt.receipt.logs));
         assert(!isEventInLogs("minterAcceptanceEvent", receipt.receipt.logs)); // cant be accepted yet
 
@@ -206,6 +216,7 @@ contract(' TEST SUITE 1 [ Basic functionality of token ]', function(accounts) {
 
         // It will be important to later check if he voted already
         var receipt = await contract.voteForMinter(pendingMinters[0], {from: not_minter_1});
+        console.log('Gas used:', receipt.receipt.gasUsed);
 
         assert(isEventInLogs("minterAcceptanceEvent", receipt.receipt.logs));
     });
@@ -222,6 +233,7 @@ contract(' TEST SUITE 1 [ Basic functionality of token ]', function(accounts) {
 
         try {
             var receipt = await contract.transfer(not_transfer_admin_1, W3.utils.toBN(500 * 10**decimals), {from: transfer_admin});
+            console.log('Gas used:', receipt.receipt.gasUsed);
         }
         catch (error) {
             console.log("Tried to send over TRANSFERLIMIT! Success");
@@ -233,11 +245,13 @@ contract(' TEST SUITE 1 [ Basic functionality of token ]', function(accounts) {
 
         // Try to make another user transfer admin
         var receipt = await contract.newRestrAdmin(not_transfer_admin_1, true, {from: transfer_admin});
+        console.log('Gas used:', receipt.receipt.gasUsed);
 
         assert(isEventInLogs("restrAdminProposalEvent", receipt.receipt.logs));
         assert(isEventInLogs("restrAdminAdd", receipt.receipt.logs));
 
         var receipt = await contract.newRestrAdmin(not_transfer_admin_2, true, {from: transfer_admin});
+        console.log('Gas used:', receipt.receipt.gasUsed);
         assert(isEventInLogs("restrAdminProposalEvent", receipt.receipt.logs));
         assert(!isEventInLogs("restrAdminAdd", receipt.receipt.logs)); // cant be accepted yet
 
@@ -246,6 +260,7 @@ contract(' TEST SUITE 1 [ Basic functionality of token ]', function(accounts) {
 
         // It will be important to later check if he voted already
         var receipt = await contract.voteForRestrAdmin(pendingRestrAdmins[0], {from: not_transfer_admin_1});
+        console.log('Gas used:', receipt.receipt.gasUsed);
 
         assert(isEventInLogs("restrAdminAdd", receipt.receipt.logs));
     });
@@ -257,8 +272,10 @@ contract(' TEST SUITE 1 [ Basic functionality of token ]', function(accounts) {
 
         try {
             await contract.newRestrAdmin(not_transfer_admin, true, {from: transfer_admin});
+
             var pendingRestrAdmins = await contract.getRestrProposals();
             await contract.voteForRestrAdmin(pendingRestrAdmins[0], {from: transfer_admin});
+            
         }
         catch (error) {
             console.log("Tried to replay voting for new Restr admin! Success");

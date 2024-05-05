@@ -50,24 +50,6 @@ contract TransferManager {
     mapping(address => uint256) internal dailyLimit;
     mapping(address => mapping(uint256 => uint256)) internal dailySpendings;
 
-    /*/
-    modifier didntVoteDaily(uint256 proposalId) {
-        dailyLimitChange storage p = dailyLimitChanges[proposalId];
-        if (p.votes[msg.sender]) {
-            revert("Already voted!");
-        }
-        _;
-    }
-
-    modifier didntVoteAlreadyNewRestr(uint256 proposalId) {
-        restrAdminProposal storage p = restrAdminProposals[proposalId];
-        if (p.votes[msg.sender]) {
-            revert("Already voted!");
-        }
-        _;
-    }
-    */
-
     modifier didntVoteAlreadyTransfer(uint256 proposalId, mapping(address => bool) storage votes) {
         if (votes[msg.sender]) {
             revert("Already voted!");
